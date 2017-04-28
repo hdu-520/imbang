@@ -7,15 +7,10 @@ using namespace cv;
 
 int main() {
     imbang bang;
+    Mat image = imread("cat.jpg");
+    imshow("dw",image);
+    waitKey(0);
 
-    string src = "/home/lunaticf/Desktop/hehe/000531.jpg";
-    string dst = "/home/lunaticf/Desktop/rotatehehe";
-
-    Mat a = imread(src);
-
-    cout<<a.cols<<endl<<a.rows;
-
-    bang.batchRotate(src,dst,"36",60);
 
     return 0;
 }
