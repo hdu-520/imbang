@@ -7,16 +7,19 @@
 
 #include <vector>
 #include <string>
-
+#include <opencv2/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "tinyxml2.h"
 
 using namespace std;
+using namespace cv;
 
 class imbang {
 
 public:
-    void fileUnderDir(const string &dirName, int mode);
+
 
     void enhancePicByLapa(const string &dirName,const string dstDirName, int key, const string &prefix);
 
@@ -32,32 +35,20 @@ public:
 
     void batchBilateralBlur(const string &dirName, const string &dstDirName, const string &prefix);
 
-
     void enhancePicByLog(const string &dirName, const string dstDirName, const string &prefix);
 
     void batchSobel(const string &dirName, const string dstDirName, const string &prefix);
 
-    void batchNoise(const string &dirName, const string dstDirName, const string &prefix, int noiseNum);
+    void batchNoise(const string &src_dir,const string dst_dir,const string &prefix,int noise_num);
 
     void batchRotate(const string &dirName, const string dstDirName, const string &prefix, int degree);
 
     void alterXMLofRotate(const string &dirName);
 
-
     void pointThePicture(const string &xmlName, const string &imgName);
-
 
     void generateImageSets(const string &xmlName, int trainval, int train);
 
-
-
-
-    /**
-     *
-     * @param srcDir 源文件夹路径
-     * @param dstDir 目的文件夹路径
-     * 将源文件夹下所有文件夹内文件复制到dstDir下
-     */
     void mergeFolders(const string &srcDir,const string &dstDir);
 
     void ClearFilesNotFolders(const string &srcDir);
@@ -66,12 +57,16 @@ public:
 
     void batchSharpen(const string &dirName,const string dstDirName,const string &prefix);
 
-        void clearBarn();
+    void colorReduce(const Mat &image, Mat &result, int div);
 
 
 private:
-    vector<string> imgBarn;
-    vector<string> xmlBarn;
+    vector<string> img_barn;
+    vector<string> xml_barn;
+
+    void fileUnderDir(const string &dirName, int mode);
+
+    void clearBarn();
 
 };
 

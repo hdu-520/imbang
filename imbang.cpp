@@ -18,6 +18,12 @@ using namespace std;
 using namespace cv;
 using namespace tinyxml2;
 
+
+/**
+ *
+ * @param dirName 文件夹路径
+ * @param mode 1为图像文件目录 2为XML文件目录
+ */
 void imbang::fileUnderDir(const string &dirName, int mode){
     // open specific dir
     DIR* dir = opendir(dirName.c_str());
@@ -32,9 +38,9 @@ void imbang::fileUnderDir(const string &dirName, int mode){
             {
                 string filename = string(p->d_name);
                 if(mode == 1){
-                    imgBarn.push_back(filename);
+                    img_barn.push_back(filename);
                 } else {
-                    xmlBarn.push_back(filename);
+                    xml_barn.push_back(filename);
                 }
             }
         }
@@ -42,39 +48,57 @@ void imbang::fileUnderDir(const string &dirName, int mode){
     }
 }
 
-
+/**
+ * 清除容器中已经存放的东西
+ */
 void imbang::clearBarn(){
-    imgBarn.clear();
-    xmlBarn.clear();
+    img_barn.clear();
+    xml_barn.clear();
 }
 
+/**
+ *
+ * @param dirName 原图像目录
+ * @param dstDirName 存放生成图像目录
+ * @param key 拉普拉斯算子参数 建议从3.5开始 以0.5为步长
+ * @param prefix 生成图像文件名前缀
+ */
 void imbang::enhancePicByLapa(const string &dirName,const string dstDirName, int key, const string &prefix){
     fileUnderDir(dirName,1);
-        for(auto &el:imgBarn){
-            string str = dirName + "/" + el;
-            Mat image = imread(str);
-            if (image.empty())
-            {
-                cout << "打开图片失败,请检查" << endl;
-                return;
-            }
-            cout<<str + "    processing";
-            Mat imageEnhance;
-            el[0] = prefix[0];
-            el[1] = prefix[1];
 
-            Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, 0, key, 0, 0, -1, 0);
-            filter2D(image, imageEnhance, CV_8UC3, kernel);
-            string saveImagePath = dstDirName + "/" + el;
-            imwrite(saveImagePath,imageEnhance);
-            cout<<endl<<saveImagePath<<"    saved"<<endl;
+    for (auto &el:img_barn) {
+        string str = dirName + "/" + el;
+        Mat image = imread(str);
+        if (image.empty()) {
+            cout << "打开图片失败,请检查" << endl;
+            return;
         }
+        cout << str + "    processing";
+        Mat imageEnhance;
+        el[0] = prefix[0];
+        el[1] = prefix[1];
+
+        Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, 0, key, 0, 0, -1, 0);
+        filter2D(image, imageEnhance, CV_8UC3, kernel);
+
+        string saveImagePath = dstDirName + "/" + el;
+        imwrite(saveImagePath, imageEnhance);
+        cout << endl << saveImagePath << "    saved" << endl;
+    }
+
     clearBarn();
 }
 
+/**
+ *
+ * @param dirName 原图像目录
+ * @param dstDirName 存放生成图像目录
+ * @param prefix 生成图像文件名前缀
+ * 批量进行平滑处理
+ */
 void imbang::batchBlur(const string &dirName,const string &dstDirName,const string &prefix){
     fileUnderDir(dirName,1);
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         string str = dirName + "/" + el;
             Mat image = imread(str);
             if (image.empty())
@@ -96,10 +120,16 @@ void imbang::batchBlur(const string &dirName,const string &dstDirName,const stri
     clearBarn();
 }
 
-
+/**
+ *
+ * @param dirName 原图像目录
+ * @param dstDirName 存放生成图像目录
+ * @param prefix 生成图像文件名前缀
+ * 批量进行高斯模糊
+ */
 void imbang::batchGaussianBlur(const string &dirName,const string &dstDirName,const string &prefix){
     fileUnderDir(dirName,1);
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         string str = dirName + "/" + el;
         Mat image = imread(str);
         if (image.empty())
@@ -121,9 +151,16 @@ void imbang::batchGaussianBlur(const string &dirName,const string &dstDirName,co
     clearBarn();
 }
 
+/**
+ *
+ * @param dirName 原图像目录
+ * @param dstDirName 存放生成图像目录
+ * @param prefix 生成图像文件名前缀
+ * 批量进行中值模糊
+ */
 void imbang::batchMedianBlur(const string &dirName,const string &dstDirName,const string &prefix){
     fileUnderDir(dirName,1);
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         string str = dirName + "/" + el;
         Mat image = imread(str);
         if (image.empty())
@@ -146,9 +183,16 @@ void imbang::batchMedianBlur(const string &dirName,const string &dstDirName,cons
 }
 
 
+/**
+ *
+ * @param dirName 原图像目录
+ * @param dstDirName 存放生成图像目录
+ * @param prefix 生成图像文件名前缀
+ * 批量进行双边模糊
+ */
 void imbang::batchBilateralBlur(const string &dirName,const string &dstDirName,const string &prefix){
     fileUnderDir(dirName,1);
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         string str = dirName + "/" + el;
         Mat image = imread(str);
         if (image.empty())
@@ -171,17 +215,16 @@ void imbang::batchBilateralBlur(const string &dirName,const string &dstDirName,c
 }
 
 
-
-
-void imbang::batchAlterXMLNode(const string &dirName,const string &imageDir){
-    fileUnderDir(imageDir,1);
+/**
+ *
+ * @param dirName 源文件目录
+ * @param prefix 前缀
+ * 根据前缀来修改对应的XML文件的filename这个节点的值
+ */
+void imbang::batchAlterXMLNode(const string &dirName,const string &prefix){
     fileUnderDir(dirName,2);
-    std::sort(xmlBarn.begin(),xmlBarn.end());
-    std::sort(imgBarn.begin(),imgBarn.end());
 
-
-    int i = 0;
-    for(auto &el:xmlBarn){
+    for(auto &el:xml_barn){
         XMLDocument doc;
         string filePath = dirName + "/" +el;
         doc.LoadFile(filePath.c_str());
@@ -189,16 +232,25 @@ void imbang::batchAlterXMLNode(const string &dirName,const string &imageDir){
         //initialize root node
         XMLElement *RootElement = doc.RootElement();
         XMLElement *fileNameNode = RootElement->FirstChildElement()->NextSiblingElement();
-        fileNameNode->SetText((imgBarn[i++]).c_str());
+        string filename = fileNameNode->GetText();
+        filename[0] = prefix[0];
+        filename[1] = prefix[1];
+        fileNameNode->SetText(filename.c_str());
         doc.SaveFile(filePath.c_str());
         cout<<filePath<<" alter filename node done"<<endl;
     }
     clearBarn();
 }
 
+/**
+ *
+ * @param dirName 源文件目录
+ * @param prefix 前缀
+ * 根据前缀来修改对应的XML文件名
+ */
 void imbang::batchAlterXMLName(const string &dirName, const string &prefix){
     fileUnderDir(dirName,2);
-    for(auto &el:xmlBarn){
+    for(auto &el:xml_barn){
         string filePath = dirName + "/" + el;
         el[0] = prefix[0];
         el[1] = prefix[1];
@@ -214,7 +266,7 @@ void imbang::batchAlterXMLName(const string &dirName, const string &prefix){
 
 void imbang::enhancePicByLog(const string &dirName,const string dstDirName,const string &prefix){
     fileUnderDir(dirName,1);
-        for(auto &el:imgBarn){
+        for(auto &el:img_barn){
             string str = dirName + "/" + el;
             Mat image = imread(str);
             if (image.empty())
@@ -252,7 +304,7 @@ void imbang::batchSobel(const string &dirName,const string dstDirName,const stri
     fileUnderDir(dirName,1);
     Mat grad_x,grad_y;
     Mat abs_grad_x,abs_grad_y,dst;
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         string str = dirName + "/" + el;
         Mat image = imread(str);
         if (image.empty())
@@ -283,7 +335,7 @@ void imbang::batchSobel(const string &dirName,const string dstDirName,const stri
 
 void imbang::batchSharpen(const string &dirName,const string dstDirName,const string &prefix){
     fileUnderDir(dirName,1);
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         string str = dirName + "/" + el;
         Mat img = imread(str);
         if (img.empty())
@@ -336,38 +388,56 @@ void imbang::batchSharpen(const string &dirName,const string dstDirName,const st
     clearBarn();
 }
 
-void imbang::batchNoise(const string &dirName,const string dstDirName,const string &prefix,int noiseNum){
-    fileUnderDir(dirName,1);
+/**
+ *
+ * @param src_dir 要处理的图像文件目录
+ * @param dst_dir 处理后的图片存放目录
+ * @param prefix  处理后的图片要更改的前缀
+ * @param noise_num  要添加的噪声数量
+ *
+ * 使用循环执行noise_num次，每次把随机选择的像素设置为255
+ */
+void imbang::batchNoise(const string &src_dir,const string dst_dir,const string &prefix,int noise_num){
+    // 获取源目录的所有图像文件名
+    fileUnderDir(src_dir,1);
 
-    for(auto &el:imgBarn){
-        string str = dirName + "/" + el;
+    // 对每一张图像处理
+    for(auto &el:img_barn){
+        string str = src_dir + "/" + el;
         Mat image = imread(str);
+
         if (image.empty())
         {
             cout << "打开图片失败,请检查" << endl;
             return;
         }
+
         cout<<str + "    processing";
+
+        // 更改前缀
         el[0] = prefix[0];
         el[1] = prefix[1];
 
-            for(int k=0;k<noiseNum;k++)
-            {
-                int i=rand()%image.cols;
-                int j=rand()%image.rows;
-                if(image.channels()==1)
-                {
-                    image.at<uchar>(j,i)=255;
-                }
-                else if(image.channels()==3)
-                {
-                    image.at<Vec3b>(j,i)[0]=255;
-                    image.at<Vec3b>(j,i)[1]=255;
-                    image.at<Vec3b>(j,i)[2]=255;
-                }
-            }
+        int i,j;
 
-        string saveImagePath = dstDirName + "/" + el;
+        for (int k = 0; k < noise_num; k++) {
+            // 随机生成噪声位置
+            i = rand() % image.cols;
+            j = rand() % image.rows;
+
+            // 如果图像为灰度图像
+            if (image.type() == CV_8UC1) {
+                image.at<uchar>(j, i) = 255;
+            } else if (image.type() == CV_8UC3) {
+                //图像为彩色图像 需要把三个主颜色通道都设置为255
+                image.at<Vec3b>(j, i)[0] = 255;
+                image.at<Vec3b>(j, i)[1] = 255;
+                image.at<Vec3b>(j, i)[2] = 255;
+            }
+        }
+
+        // 将修改前缀后的图像保存到指定目录
+        string saveImagePath = dst_dir + "/" + el;
         imwrite(saveImagePath,image);
 
         cout<<endl<<saveImagePath<<"    saved"<<endl;
@@ -377,7 +447,7 @@ void imbang::batchNoise(const string &dirName,const string dstDirName,const stri
 
 void imbang::batchRotate(const string &dirName,const string dstDirName,const string &prefix, int degree){
     fileUnderDir(dirName,1);
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         string str = dirName + "/" + el;
         Mat image = imread(str);
         if (image.empty())
@@ -420,14 +490,14 @@ void imbang::batchRotate(const string &dirName,const string dstDirName,const str
 
 void imbang::alterXMLofRotate(const string &dirName) {
     fileUnderDir(dirName,2);
-    std::sort(xmlBarn.begin(),xmlBarn.end());
+    std::sort(xml_barn.begin(),xml_barn.end());
 
 //    CvPoint center;
 //    center.x = img.cols / 2;
 //    center.y = img.rows / 2;
 //
 //    int i = 0;
-//    for(auto &el:xmlBarn){
+//    for(auto &el:xml_barn){
 //        XMLDocument doc;
 //        string filePath = dirName + "/" +el;
 //        // read a xml
@@ -480,15 +550,15 @@ void imbang::pointThePicture(const string &xmlName,const string &imgName) {
     fileUnderDir(xmlName,2);
     fileUnderDir(imgName,1);
 
-    std::sort(xmlBarn.begin(),xmlBarn.end());
-    std::sort(imgBarn.begin(),imgBarn.end());
+    std::sort(xml_barn.begin(),xml_barn.end());
+    std::sort(img_barn.begin(),img_barn.end());
 
 
     int i = 0;
-    for(auto &el:xmlBarn){
+    for(auto &el:xml_barn){
         XMLDocument doc;
         string filePath = xmlName + "/" +el;
-        string imgPath = imgName + "/" + imgBarn[i++];
+        string imgPath = imgName + "/" + img_barn[i++];
 
         Mat Aimg  = imread(imgPath);
 
@@ -547,7 +617,7 @@ void imbang::pointThePicture(const string &xmlName,const string &imgName) {
             locationNode = locationNode->NextSiblingElement("object");
         }
 
-        string imgPath1 = imgName + "/s" + imgBarn[i];
+        string imgPath1 = imgName + "/s" + img_barn[i];
         imwrite(imgPath1,Aimg);
         imshow("a",Aimg);
 
@@ -559,14 +629,20 @@ void imbang::pointThePicture(const string &xmlName,const string &imgName) {
     clearBarn();
 }
 
-
+/**
+ *
+ * @param xmlName 存放xml文件夹
+ * @param trainval 需要trainval的数量
+ * @param train 需要训练集的数量
+ * 生成训练集测试集验证集的txt文件 test = 总数 - trainval
+ */
 void imbang::generateImageSets(const string &xmlName,int trainval, int train){
     // 读取
     fileUnderDir(xmlName,2);
     ofstream o;
 
 
-    for(auto &el:xmlBarn){
+    for(auto &el:xml_barn){
         int dotIndex = el.find(".");
         el.erase(dotIndex,el.size());
     }
@@ -578,7 +654,7 @@ void imbang::generateImageSets(const string &xmlName,int trainval, int train){
         return;
     }
     for(int i = 0; i < trainval; i++){
-        o<<xmlBarn[i]<<endl;
+        o<<xml_barn[i]<<endl;
     }
     o.close();
 
@@ -589,7 +665,7 @@ void imbang::generateImageSets(const string &xmlName,int trainval, int train){
     }
     // 写入指定的train张图片
     for(int i = 0; i < train; i++){
-        o<<xmlBarn[i]<<endl;
+        o<<xml_barn[i]<<endl;
     }
     o.close();
 
@@ -600,7 +676,7 @@ void imbang::generateImageSets(const string &xmlName,int trainval, int train){
     }
     // 写入train后的val张图片 总和为trainval
     for(int i = train; i < trainval; i++){
-        o<<xmlBarn[i]<<endl;
+        o<<xml_barn[i]<<endl;
     }
     o.close();
 
@@ -610,14 +686,19 @@ void imbang::generateImageSets(const string &xmlName,int trainval, int train){
         return;
     }
     // 把最后剩下的图片当作测试集
-    for(int i = trainval; i < xmlBarn.size(); i++){
-        o<<xmlBarn[i]<<endl;
+    for(int i = trainval; i < xml_barn.size(); i++){
+        o<<xml_barn[i]<<endl;
     }
     o.close();
     clearBarn();
 }
 
-
+/**
+ *
+ * @param srcDir 源文件夹
+ * @param dstDir 目的文件夹
+ * 合并一个文件夹下所有文件夹下文件到另一个文件夹
+ */
 void imbang::mergeFolders(const string &srcDir, const string &dstDir) {
     string path=srcDir;
     vector<string> files;//存放文件名
@@ -673,13 +754,17 @@ void imbang::mergeFolders(const string &srcDir, const string &dstDir) {
 }
 
 
-
+/**
+ *
+ * @param srcDir 源文件
+ * 清除一个文件夹下所有文件夹的文件
+ */
 void imbang::ClearFilesNotFolders(const string &srcDir) {
     fileUnderDir(srcDir,1);
 
     string cmd = "";
 
-    for(auto &el:imgBarn)
+    for(auto &el:img_barn)
     {
         //cout<<files[i]<<endl;
         cmd+="rm -rf "+ srcDir + "/";
@@ -692,28 +777,34 @@ void imbang::ClearFilesNotFolders(const string &srcDir) {
     clearBarn();
 }
 
+/**
+ *
+ * @param img_dir 图像文件目录
+ * @param xml_dir xml文件目录
+ * 标定时有的图像会没有目标物而不标 此函数可以根据xml去除那些没用的图像
+ */
 void imbang::ClearNotUsedImgByXML(const string &img_dir,const string &xml_dir) {
     fileUnderDir(img_dir,1);
     fileUnderDir(xml_dir,2);
 
-    for(auto &el:xmlBarn){
+    for(auto &el:xml_barn){
         int dotIndex = el.find(".");
         el.erase(dotIndex,el.size());
     }
 
 
 
-    for(auto &el:imgBarn){
+    for(auto &el:img_barn){
         int dotIndex = el.find(".");
         el.erase(dotIndex,el.size());
     }
 
     string cmd = "";
 
-    for(auto &el:imgBarn)
+    for(auto &el:img_barn)
     {
         bool flag = false;
-        for(auto &xml:xmlBarn){
+        for(auto &xml:xml_barn){
             if(xml == el){
                 flag = true;
             }
@@ -742,6 +833,32 @@ CvPoint getPointAffinedPos(const CvPoint &src, const CvPoint &center, double ang
     dst.x = cvRound(x * cos(angle) + y * sin(angle) + center.x);
     dst.y = cvRound(-x * sin(angle) + y * cos(angle) + center.y);
     return dst;
+}
+
+
+/**
+ *
+ * @param image 输入图像
+ * @param result 输出图像
+ * @param div 减色因子
+ * 减色算法
+ * 如果需要就地处理图像，可以在输入和输出参数中用同一个image变量colorReduce(image,image)
+ */
+void imbang::colorReduce(const Mat &image, Mat &result, int div = 64){
+    // 构建一个大小与类型都与输入图像相同的矩阵
+    result.create(image.rows, image.cols, image.type());
+
+    int n1 = image.rows; // 行数
+    int nc = image.cols * image.channels(); // 每行的元素数量
+    for(int j = 0; j < n1; j++) {
+        const uchar* data_in = image.ptr<uchar>(j);
+        uchar* data_out = result.ptr<uchar>(j);
+
+        for(int i = 0; i < nc; i++) {
+            // 处理每个像素
+            data_out[i] = data_in[i]/div*div + div/2;
+        }// 一行结束
+    }
 }
 
 
