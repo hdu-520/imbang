@@ -19,6 +19,7 @@ using namespace cv;
 class imbang {
 
 public:
+    void myVideoToImage(string src, string dst, int step)
 
 
     void enhancePicByLapa(const string &dirName,const string dstDirName, int key, const string &prefix);

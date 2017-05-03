@@ -21,6 +21,33 @@ using namespace tinyxml2;
 
 /**
  *
+ * @param src 源视频路径
+ * @param dst 目的存放照片路径
+ * @param step 　步长
+ */
+void imbang::myVideoToImage(string src, string dst, int step) {
+    VideoCapture capture(src);
+
+    string imageName;
+    int i = 0;
+
+    while (1) {
+        Mat frame;
+        capture >> frame;
+        i++;
+        if (frame.empty()) {
+            break;
+        }
+        if (i % step == 0) {
+            imageName = dst + to_string(i / step) + ".jpg";
+            imwrite(imageName, frame);
+        }
+    }
+}
+
+
+/**
+ *
  * @param dirName 文件夹路径
  * @param mode 1为图像文件目录 2为XML文件目录
  */
